@@ -1,4 +1,4 @@
-Enable or disable device by hid / class / desc
+Enable, disable or print device by hid / class / desc.
 
 
 ## disable by class name 
@@ -38,3 +38,15 @@ DeviceSuppressor.exe enable="USB\VID_000"
 ```
 
 
+### Print
+
+
+print ids:
+```
+DeviceSuppressor.exe print
+```
+
+print class names:
+```
+DeviceSuppressor.exe print=byclass
+```
