@@ -8,7 +8,7 @@ DeviceSuppressor.exe disablebyclass="mouse"
 ```
 
 
-### disable devices whose description is ends with "mouse"
+### disable devices whose description ends with "mouse"
 
 the first `?` indicates a wildcard match:
 
