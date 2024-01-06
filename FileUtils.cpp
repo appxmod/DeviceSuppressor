@@ -16,7 +16,7 @@ int MoveToTrash(PCZZSTR path, BOOL bNoUI)
     ZeroMemory(&fileOp, sizeof(SHFILEOPSTRUCT));
     fileOp.wFunc = FO_DELETE;
     fileOp.pFrom = path;
-    fileOp.fFlags = FOF_ALLOWUNDO  | FOF_FILESONLY | FOF_WANTNUKEWARNING;
+    fileOp.fFlags = FOF_ALLOWUNDO  | FOF_WANTNUKEWARNING;
     if(bNoUI) fileOp.fFlags |= FOF_NOCONFIRMATION | FOF_SILENT;
     // fAnyOperationsAborted
     return SHFileOperationA(&fileOp);
