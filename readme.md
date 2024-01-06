@@ -50,3 +50,13 @@ print class names:
 ```
 DeviceSuppressor.exe print=byclass
 ```
+
+
+### Delete file 
+
+Move to recycle bin:
+
+```
+DeviceSuppressor.exe delete="fullpath"
+```
+

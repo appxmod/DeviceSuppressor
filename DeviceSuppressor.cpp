@@ -179,6 +179,36 @@ bool isMatch(wstring text, wstring pattern)
 }
 
 
+int Register_GetValue(const char* sub_key, const char* key, char* value) {
+	BYTE* buffer = NULL;
+	HKEY hkey = nullptr;
+	LSTATUS res = ::RegOpenKeyExA(HKEY_CURRENT_USER, sub_key, 0, KEY_READ, &hkey);
+	if (res != ERROR_SUCCESS) {
+		return -1;
+	}
+	std::shared_ptr<void> close_key(nullptr, [&](void*) {
+		if (hkey != nullptr) {
+			::RegCloseKey(hkey);
+			hkey = nullptr;
+		}
+	});
+	DWORD type = REG_SZ;
+	DWORD size = 0;
+	res = ::RegQueryValueExA(hkey, key, 0, &type, nullptr, &size);
+	if (res != ERROR_SUCCESS || size <= 0) {
+		return -1;
+	}
+	std::vector<BYTE> value_data(size);
+	res = ::RegQueryValueExA(hkey, key, 0, &type, value_data.data(), &size);
+	if (res != ERROR_SUCCESS) {
+		return -1;
+	}
+
+	buffer = &value_data[0];
+	strcpy_s(value, value_data.size(), (char*)buffer);
+	return 1;
+}
+
 VOID SetDeviceState(LPCWSTR lpszHardwareId, DWORD dwState, int Id_Class_Desc)
 {				
 	//OutputDebugString(L"SetDeviceState=");
@@ -187,7 +217,16 @@ VOID SetDeviceState(LPCWSTR lpszHardwareId, DWORD dwState, int Id_Class_Desc)
 
 	//std::cout<<"by="<<Id_Class_Desc<<std::endl;
 	//wprintf(lpszHardwareId);
-
+	if(Id_Class_Desc==3)
+	{
+		//int set = GetSystemMetrics(SM_CMONITORS)  ;
+		//std::cout<<set<<std::endl;
+		const char* keyPath = "Software\\Microsoft\\Windows NT\\CurrentVersion\\Accessibility\\ATConfig\\colorfiltering\\";
+		char value[1024] = { 0 };
+		int ret = Register_GetValue(keyPath, "Active", value);
+		std::cerr << ret << value << std::endl;
+		return;
+	}
 	HDEVINFO devInfo;
 	if (devInfo = SetupDiGetClassDevsW(NULL, NULL, NULL, DIGCF_ALLCLASSES))
 	{
@@ -280,6 +319,7 @@ int main(int argc, void * argv[])
 	QkString tmpBy;
 	tmp.AsBuffer();
 	tmpBy.AsBuffer();
+	int ret = 0;
 	for (int i = 0; i < argc; i++)
 	{
 		//arguments.push_back(std::string((CHAR*)argv[i]));
@@ -316,12 +356,34 @@ int main(int argc, void * argv[])
 			int by = 0;
 			if(StrStartWith(arg, "=", false, 5)) {
 				tmpBy = arg+6;
-				by = tmpBy.StartWith(L"bydesc")?2
+				by = tmpBy.StartWith(L"byset")?3
+					: tmpBy.StartWith(L"bydesc")?2
 					:tmpBy.StartWith(L"byclass")?1
 					:0
 					;
 			}
 			SetDeviceState(tmp, -1, by);
+		}
+		else if(StrStartWith(arg, "delete", false, 0)) {
+			arg += 6;
+			int idx = strchr(arg, '=') - arg;
+			if(idx >= 0) {
+				// prepare id name
+				tmp = arg + idx + 1;
+				if(tmp.StartWith('\"') && tmp.EndWith('\"')) {
+					tmp.MidFast(1, tmp.GetLength()-2);
+				}
+				tmp.Trim();
+				std::string buffer;
+				extern int MoveToTrash(PCZZSTR path, BOOL bNoUI);
+
+				//OutputDebugString(L"MoveToTrash\n");
+				//OutputDebugString(tmp);
+				auto path = tmp.GetData(buffer);
+				std::cout<<"deleting::"<<path<<std::endl;
+				ret = MoveToTrash(path, true);
+				std::cout<<"deleted="<<ret<<std::endl;
+			}
 		}
 	}
 	// enable="USB\VID_12C9&PID_1028&REV_0210&MI_00"
@@ -329,5 +391,8 @@ int main(int argc, void * argv[])
 	//SetDeviceState(L"USB\\VID_12C9&PID_1028&REV_0210&MI_00", DICS_DISABLE);
 	//SetDeviceState(L"USB\\VID_12C9&PID_1028&REV_0210&MI_00", DICS_ENABLE);
 
-	return 0;
+	return ret;
 }
+
+// print=byset
+// delete="D:/tmp/New folder (4)/1.png"
