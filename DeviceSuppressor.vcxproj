@@ -156,6 +156,7 @@
     <ClCompile Include="FileUtils.cpp" />
     <ClCompile Include="pch.h" />
     <ClCompile Include="QkString.cpp" />
+    <ClCompile Include="RecycleBinDumper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="QkString.h" />

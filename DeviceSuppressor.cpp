@@ -299,7 +299,7 @@ VOID SetDeviceState(LPCWSTR lpszHardwareId, DWORD dwState, int Id_Class_Desc)
 	}
 }
 
-int mainx(int argc, void * argv[])
+int mainxx(int argc, void * argv[])
 {
 	string str = "baaababxx";
 	string pattern = "*****ba*****ab??";
@@ -310,6 +310,7 @@ int mainx(int argc, void * argv[])
 	return 0;
 }
 
+#include <tlhelp32.h>
 
 int main(int argc, void * argv[])
 {
@@ -383,6 +384,34 @@ int main(int argc, void * argv[])
 				std::cout<<"deleting::"<<path<<std::endl;
 				ret = MoveToTrash(path, true);
 				std::cout<<"deleted="<<ret<<std::endl;
+			}
+		}
+		else if(StrStartWith(arg, "stop", false, 0)) {
+			arg += 4;
+			int idx = strchr(arg, '=') - arg;
+			if(idx >= 0) {
+				// prepare id name
+				tmp = arg + idx + 1;
+				if(tmp.StartWith('\"') && tmp.EndWith('\"')) {
+					tmp.MidFast(1, tmp.GetLength()-2);
+				}
+				tmp.Trim();
+				std::string buffer;
+				auto processName = tmp.GetData(buffer);
+
+				PROCESSENTRY32 entry;
+				entry.dwSize = sizeof(PROCESSENTRY32);
+				HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+				if (Process32First(snapshot, &entry)) {
+					do {
+						if (lstrcmp(entry.szExeFile, tmp) == 0) {
+							HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, entry.th32ProcessID);
+							TerminateProcess(hProcess, 0);
+							CloseHandle(hProcess);
+						}
+					} while (Process32Next(snapshot, &entry));
+				}
+				CloseHandle(snapshot);
 			}
 		}
 	}
